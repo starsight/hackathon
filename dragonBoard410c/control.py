@@ -10,6 +10,6 @@ if __name__ == "__main__":
             if os.path.exists(file):
                 os.remove(file)
             #print "hello"
-            os.system("./yeelink.sh")
+            os.system("./control.sh")
         time.sleep(1)
         i+=1

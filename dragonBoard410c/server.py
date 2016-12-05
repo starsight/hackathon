@@ -27,8 +27,9 @@ while True:
         data = socket_con.recv(64)
         if len(data)>0: 
             print("Received: %s" %data)
-            if os.path.exists(r'/yjdata/www/www/dragonBoard/request'):
+            if os.path.exists(r'request'):
                 socket_con.send("request")
+                os.remove("request")
             else :
                 socket_con.send("toClient")
             time.sleep(1)
