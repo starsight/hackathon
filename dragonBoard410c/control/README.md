@@ -16,7 +16,7 @@
 
 ##使用方法
 
-切换到dragonBoard410c目录内
+切换到dragonBoard410c/control目录内
 
 ####服务器端
 ```
