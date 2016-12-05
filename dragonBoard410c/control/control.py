@@ -8,5 +8,6 @@ if __name__ == "__main__":
             if os.path.exists(file):
                 os.remove(file)
             #print "hello"
+            os.system("chmod +x control.sh")
             os.system("sudo ./control.sh")
         time.sleep(1)
