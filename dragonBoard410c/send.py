@@ -28,7 +28,7 @@ while True:
         data = socket_tcp.recv(64)  
         if len(data)>0: 
             print("Received: %s" %data)
-            #os.system('./dragonBoard410c/face/yeelink.sh')
+            #os.system('~/Desktop/Hackathon/dragonBoard410c/face/yeelink.sh')
             if data == "request":
                 f = open("request",'w')
                 f.close()
