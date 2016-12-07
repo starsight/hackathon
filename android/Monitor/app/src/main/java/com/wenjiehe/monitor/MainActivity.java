@@ -38,26 +38,26 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
     //public static final MediaType JSON = MediaType.parse("application/json;charset = utf-8");
-    private LinkedList<String> mListItems;
-    private ArrayAdapter<String> mAdapter;
+    //private LinkedList<String> mListItems;
+   // private ArrayAdapter<String> mAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Set a listener to be invoked when the list should be refreshed.
+//
+//        mListItems = new LinkedList<String>();
+//        mListItems.addAll(Arrays.asList(mStrings));
+//
+//        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mListItems);
 
-        mListItems = new LinkedList<String>();
-        mListItems.addAll(Arrays.asList(mStrings));
-
-        mAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mListItems);
-
-    //开启一个线程做联网操作
-        new Thread (){
-            @Override
-            public void run(){
-                postJson();
-            }
-        }.start();
+   //开启一个线程做联网操作
+//        new Thread (){
+//            @Override
+//            public void run(){
+//                postJson();
+//            }
+//        }.start();
     }
 
     private void postJson(){
