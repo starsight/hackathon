@@ -1,7 +1,5 @@
 package com.wenjiehe.monitor;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -10,7 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.widget.ImageView;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -19,15 +17,17 @@ import com.canyinghao.canrefresh.CanRefreshLayout;
 import com.canyinghao.canrefresh.classic.ClassicRefreshView;
 import com.canyinghao.canrefresh.shapeloading.ShapeLoadingRefreshView;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,8 +36,6 @@ import java.util.Date;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
-import static android.R.attr.path;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -88,15 +86,22 @@ public class MainActivity extends AppCompatActivity {
         new Thread() {
             @Override
             public void run() {
-                postJson();
+                String lastTime = readTimeFromFIle();
+                String currentTime = getCurrentTime();
+                Log.d(TAG, lastTime);
+                Log.d(TAG, currentTime);
+                getNewImageResource(lastTime, currentTime);
             }
         }.start();
     }
 
-    private void postJson() {
+    private void getNewImageResource(String lastTime, String currentTime) {
         OkHttpClient okHttpClient = new OkHttpClient();
         //构建一个请求对象
-        Request request = new Request.Builder().url("http://api.yeelink.net/v1.0/device/344726/sensor/383332.json?start=2016-12-05T17:00:00&end=2016-12-05T20:00:00&interval=1&page=1").build();
+        Request request = new Request.Builder().url
+                ("http://api.yeelink.net/v1.0/device/344726/sensor/383332.json?start=" + lastTime + "&end=" + currentTime + "&interval=1&page=1")
+                .build();
+        //Request request = new Request.Builder().url("http://api.yeelink.net/v1.0/device/344726/sensor/383332.json?start=2016-12-05T17:00:00&end=2016-12-05T20:00:00&interval=1&page=1").build();
         //发送请求
         try {
             Response response = okHttpClient.newCall(request).execute();
@@ -160,13 +165,15 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what) {
                 case IS_SUCCESS:
                     byte[] bytes = (byte[]) msg.obj;
-                    arrayListMO.add(new MonitorObject(bytes));
+                    arrayListMO.add(new MonitorObject(bytes, timestamp.get(current)));
                     if (current >= timestamp.size())
                         current = timestamp.size() - 1;
                     saveToImByStr(bytes, Environment.getExternalStorageDirectory() + "/Monitor/", timestamp.get(current));
                     current++;
-                    if (current >= timestamp.size() - 1)
-                        writeTxt();
+                    if (current >= timestamp.size() - 1) {//本次从服务器端获取数据完成了
+                        writeTimeFromFIle();
+                        loadMonitorObjectFromFile();
+                    }
                     rva.notifyDataSetChanged();
                     //imageView.setImageBitmap(bitmap);
                     break;
@@ -177,6 +184,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void loadMonitorObjectFromFile() {
+//        arrayListMO.
+    }
 
     /**
      * @param bytes   二进制流
@@ -211,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //创建一个文件，用于保存当前时间节点的照片，刷新后继续则从该时间节点下载，而并非重新开始下载。
-    public static void writeTxt() {
+    public void writeTimeFromFIle() {
         try {
             File file = new File(Environment.getExternalStorageDirectory() + "/Monitor/time");
             BufferedWriter bf = new BufferedWriter(new PrintWriter(file));
@@ -222,8 +233,31 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public String readTimeFromFIle() {
+        StringBuffer str = new StringBuffer("");
+        File file = new File(Environment.getExternalStorageDirectory() + "/Monitor/time");
 
+        if (file.exists()) {
+            InputStreamReader read = null;//考虑到编码格式
+            try {
+                read = new InputStreamReader(new FileInputStream(file));
+                BufferedReader bufferedReader = new BufferedReader(read);
+                String lineTxt = null;
+                lineTxt = bufferedReader.readLine();
+                read.close();
+                return lineTxt;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            return "2016-12-05T20:00:00";
+        }
+        return "2016-12-05T20:00:00";
     }
 
     private static String getCurrentTime() {
@@ -231,4 +265,5 @@ public class MainActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         return sdf.format(date);
     }
+
 }

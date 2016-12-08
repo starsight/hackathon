@@ -12,8 +12,9 @@ public class MonitorObject {
     byte[] bytesImage;
     public String tittle;
 
-    public MonitorObject(byte[] bytesImage) {
+    public MonitorObject(byte[] bytesImage,String tittle) {
         this.bytesImage = bytesImage;
+        this.tittle = tittle;
     }
     //public String time;
 }
