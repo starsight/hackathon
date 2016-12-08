@@ -30,8 +30,7 @@
                 android:layout_height="150dp"
                 android:layout_alignParentTop="true"
                 android:scaleType="centerCrop"
-                android:src="@mipmap/header_bg"
-                android:visibility="gone"/>
+                android:src="@mipmap/header_bg"/>
 
             <TextView
                 android:id="@+id/news_title"

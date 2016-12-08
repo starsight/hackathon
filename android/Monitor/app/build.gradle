@@ -31,4 +31,8 @@ dependencies {
 
     //CanRefresh
     compile 'com.canyinghao:canrefresh:1.0.9'
+
+    compile 'com.alibaba:fastjson:1.2.21'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.android.support:support-v4:23.4.0'
 }
