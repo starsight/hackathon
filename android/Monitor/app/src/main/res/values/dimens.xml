@@ -4,5 +4,8 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="bbuton_rounded_corner_radius">40dp</dimen>
 
+    <dimen name="app_bar_height">180dp</dimen>
+    <dimen name="actions_padding">16dp</dimen>
+    <dimen name="card_topcolored_title_textsize">22dp</dimen>
 
 </resources>

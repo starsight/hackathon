@@ -23,7 +23,7 @@ public class ChooseActivity extends BaseActivity {
     TextView tv_loginForgetPassword;//login
     EditText et_loginUserName,et_loginPassword;
 
-    EditText et_regUserName,et_regEmail,et_regPassword;//register
+    EditText et_regUserName,et_regPassword;//register
 
     Button bt_chooseLogin,bt_chooseRegister;//启动选择登陆or注册
     ImageView iv_choose_icon;
@@ -50,7 +50,6 @@ public class ChooseActivity extends BaseActivity {
         if (getUserId() != null) {
             Intent mainIntent = new Intent(activity, MainActivity.class);
             mainIntent.putExtra("username",getUserName());
-            mainIntent.putExtra("signnum",getSignNum());
 
             startActivity(mainIntent);
             activity.finish();
@@ -157,7 +156,6 @@ public class ChooseActivity extends BaseActivity {
         }
     };*/
 
-
     //选择登陆
     View.OnClickListener chooseLoginListener = new View.OnClickListener() {
         @Override
@@ -191,7 +189,6 @@ public class ChooseActivity extends BaseActivity {
             bt_register = (Button) findViewById(R.id.bt_register);
 
             et_regUserName = (EditText) findViewById(R.id.et_regUserName);
-            et_regEmail = (EditText) findViewById(R.id.et_regEmail);
             et_regPassword = (EditText) findViewById(R.id.et_regPasswd);
 
             bt_register.setOnClickListener(new View.OnClickListener() {
@@ -200,18 +197,8 @@ public class ChooseActivity extends BaseActivity {
                 public void onClick(View v) {
                     if (!et_regUserName.getText().toString().isEmpty()) {
                         if (!et_regPassword.getText().toString().isEmpty()) {
-                            if (!et_regEmail.getText().toString().isEmpty()) {
-                                if(isEmail(et_regEmail.getText().toString())){
                                     progressDialogShow();
                                     register();
-                                } else {
-                                    showError(activity
-                                            .getString(R.string.error_register_email_address_format));
-                                }
-                            } else {
-                                showError(activity
-                                        .getString(R.string.error_register_email_address_null));
-                            }
                         } else {
                             showError(activity
                                     .getString(R.string.error_register_password_null));
@@ -340,13 +327,4 @@ public class ChooseActivity extends BaseActivity {
         //System.out.println("按下了back键   onBackPressed()");
     }
 
-    /*
-    * 检查email格式问题*/
-    public boolean isEmail(String email) {
-        String str = "^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$";
-        Pattern p = Pattern.compile(str);
-        Matcher m = p.matcher(email);
-
-        return m.matches();
-    }
 }
