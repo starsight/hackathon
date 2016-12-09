@@ -74,7 +74,7 @@ import java.util.List;
             final int j = i;
 
             personViewHolder.news_photo.setImageBitmap(BitmapFactory.decodeByteArray(monitorObject.get(i).bytesImage, 0, monitorObject.get(i).bytesImage.length));
-            personViewHolder.news_title.setText("监控");
+            personViewHolder.news_title.setText(monitorObject.get(i).tittle);
 
 //            Glide.with(context)
 //                        .load(monitorObject.get(i).bytesImage)

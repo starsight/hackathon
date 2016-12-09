@@ -9,6 +9,8 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -17,25 +19,26 @@ import com.canyinghao.canrefresh.CanRefreshLayout;
 import com.canyinghao.canrefresh.classic.ClassicRefreshView;
 import com.canyinghao.canrefresh.shapeloading.ShapeLoadingRefreshView;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import static com.wenjiehe.monitor.Utils.file2Byte;
+import static com.wenjiehe.monitor.Utils.getCurrentTime;
+import static com.wenjiehe.monitor.Utils.readTimeFromFIle;
+import static com.wenjiehe.monitor.Utils.removeJPG;
+import static com.wenjiehe.monitor.Utils.saveToImByStr;
+import static com.wenjiehe.monitor.Utils.writeTime2File;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<MonitorObject> arrayListMO = new ArrayList<>();
     public static ArrayList<String> timestamp = new ArrayList<>();
     public static ArrayList<String> imageurl = new ArrayList<>();
+    ArrayList<File> mList = new ArrayList<File>();
 
     CanRefreshLayout refresh;
     ShapeLoadingRefreshView canRefreshHeader;
@@ -82,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(rva);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
+
         //开启一个线程做联网操作
         new Thread() {
             @Override
@@ -107,14 +112,28 @@ public class MainActivity extends AppCompatActivity {
             Response response = okHttpClient.newCall(request).execute();
             //打印服务端传回的数据
             //Log.d(TAG, response.body().string());
+            String str = response.body().string();
+            Log.d(TAG, str);
+            if (str.equals("[]")) {
+                //Log.d(TAG, "timestamp is empty");
+                writeTime2File();
+                loadMonitorObjectFromFile();
+                for (File f : mList)
+                    arrayListMO.add(new MonitorObject(file2Byte(f), removeJPG(f.getName())));
+//                rva.notifyDataSetChanged();
+                Message message = handler.obtainMessage();
+                message.what = IS_NONE;
+                handler.sendMessage(message);
+                return;
+            }
 
-
-            JSONArray jsonArray = JSON.parseArray(response.body().string());
+            JSONArray jsonArray = JSON.parseArray(str);
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jo = jsonArray.getJSONObject(i);
                 timestamp.add(jo.getString("timestamp"));
                 //System.out.println(jo.toJSONString());
             }
+
 
             for (int i = 0; i < timestamp.size(); i++) {
                 OkHttpClient okHttpClient2 = new OkHttpClient();
@@ -156,8 +175,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private static final int IS_SUCCESS = 1;
+
     private static final int IS_FAIL = 0;
+    private static final int IS_SUCCESS = 1;
+    private static final int IS_NONE = 2;
+
     private int current = 0;
     private Handler handler = new Handler() {
         @Override
@@ -165,19 +187,34 @@ public class MainActivity extends AppCompatActivity {
             switch (msg.what) {
                 case IS_SUCCESS:
                     byte[] bytes = (byte[]) msg.obj;
-                    arrayListMO.add(new MonitorObject(bytes, timestamp.get(current)));
+                    //rrayListMO.add(new MonitorObject(bytes, timestamp.get(current)));
                     if (current >= timestamp.size())
                         current = timestamp.size() - 1;
                     saveToImByStr(bytes, Environment.getExternalStorageDirectory() + "/Monitor/", timestamp.get(current));
                     current++;
-                    if (current >= timestamp.size() - 1) {//本次从服务器端获取数据完成了
-                        writeTimeFromFIle();
+                    Log.d(TAG, String.valueOf(current));
+                    Log.d(TAG + "timestamp", String.valueOf(timestamp.size()));
+                    if (current >= timestamp.size()) {//本次从服务器端获取数据完成了
+//                        writeTime2File();
+//                        loadMonitorObjectFromFile();
+//                        for (File f : mList)
+//                            Log.d(TAG, f.getName());
+                        writeTime2File();
                         loadMonitorObjectFromFile();
+                        for (File f : mList)
+                            arrayListMO.add(new MonitorObject(file2Byte(f), removeJPG(f.getName())));
+                        Message message = handler.obtainMessage();
+                        message.what = IS_NONE;
+                        handler.sendMessage(message);
+                        return;
                     }
                     rva.notifyDataSetChanged();
                     //imageView.setImageBitmap(bitmap);
                     break;
                 case IS_FAIL:
+                    break;
+                case IS_NONE:
+                    rva.notifyDataSetChanged();
                     break;
                 default:
                     break;
@@ -186,84 +223,80 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void loadMonitorObjectFromFile() {
-//        arrayListMO.
+        String url = Environment.getExternalStorageDirectory() + "/Monitor/";
+        File albumdir = new File(url);
+
+        File[] imgfile = albumdir.listFiles(filefiter);
+        int len = imgfile.length;
+        for (int i = 0; i < len; i++) {
+            mList.add(imgfile[i]);
+        }
+        Collections.sort(mList, new FileComparator());
+    }
+
+    private FileFilter filefiter = new FileFilter() {
+        @Override
+        public boolean accept(File f) {
+            String tmp = f.getName().toLowerCase();
+            if (tmp.endsWith(".png") || tmp.endsWith(".jpg")
+                    || tmp.endsWith(".jpeg")) {
+                return true;
+            }
+            return false;
+        }
+    };
+
+    private class FileComparator implements Comparator<File> {
+        @Override
+        public int compare(File lhs, File rhs) {
+
+            String lhsTime = removeJPG(lhs.getName());
+            String rhsTime = removeJPG(rhs.getName());
+
+            Date lhsDate = null;
+            Date rhsDate = null;
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            try {
+                lhsDate = sdf.parse(lhsTime);
+                rhsDate = sdf.parse(rhsTime);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            return rhsDate.compareTo(lhsDate);
+        }
+    }
+
+    private long exitTime = 0;
+
+    /**
+     * 捕捉返回事件按钮
+     * <p>
+     * 因为此 Activity 继承 TabActivity 用 onKeyDown 无响应，所以改用 dispatchKeyEvent
+     * 一般的 Activity 用 onKeyDown 就可以了
+     */
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                this.exitApp();
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     /**
-     * @param bytes   二进制流
-     * @param imgPath 图片保存路径
-     * @param imgName 图片保存名称
-     * @return 1：保存正常 0：保存失败
+     * 退出程序
      */
-    private static int saveToImByStr(byte[] bytes, String imgPath, String imgName) {
-        int stateInt = 1;
-        try {
-            File validateCodeFolder = new File(imgPath);
-            if (!validateCodeFolder.exists()) {
-                validateCodeFolder.mkdirs();
-            }
-            InputStream in = new ByteArrayInputStream(bytes);
-            File file = new File(imgPath + imgName);
-            FileOutputStream fos = new FileOutputStream(file);
-            byte[] b = new byte[1024];
-            int nRead = 0;
-            while ((nRead = in.read(b)) != -1) {
-                fos.write(b, 0, nRead);
-            }
-            fos.flush();
-            fos.close();
-            in.close();
-        } catch (Exception e) {
-            stateInt = 0;
-            e.printStackTrace();
-        } finally {
-        }
-        return stateInt;
-    }
-
-    //创建一个文件，用于保存当前时间节点的照片，刷新后继续则从该时间节点下载，而并非重新开始下载。
-    public void writeTimeFromFIle() {
-        try {
-            File file = new File(Environment.getExternalStorageDirectory() + "/Monitor/time");
-            BufferedWriter bf = new BufferedWriter(new PrintWriter(file));
-            bf.write(getCurrentTime());
-            bf.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String readTimeFromFIle() {
-        StringBuffer str = new StringBuffer("");
-        File file = new File(Environment.getExternalStorageDirectory() + "/Monitor/time");
-
-        if (file.exists()) {
-            InputStreamReader read = null;//考虑到编码格式
-            try {
-                read = new InputStreamReader(new FileInputStream(file));
-                BufferedReader bufferedReader = new BufferedReader(read);
-                String lineTxt = null;
-                lineTxt = bufferedReader.readLine();
-                read.close();
-                return lineTxt;
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+    private void exitApp() {
+        // 判断2次点击事件时间
+        if ((System.currentTimeMillis() - exitTime) > 2000) {
+            Toast.makeText(MainActivity.this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+            exitTime = System.currentTimeMillis();
         } else {
-            return "2016-12-05T20:00:00";
+            arrayListMO .clear();
+            finish();
         }
-        return "2016-12-05T20:00:00";
     }
-
-    private static String getCurrentTime() {
-        Date date = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        return sdf.format(date);
-    }
-
 }
