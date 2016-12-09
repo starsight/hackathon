@@ -10,10 +10,10 @@
     app:can_style_down="classic"
     app:can_style_up="mid">
 
-    <com.canyinghao.canrefresh.shapeloading.ShapeLoadingRefreshView
+    <com.canyinghao.canrefresh.classic.ClassicRefreshView
         android:id="@id/can_refresh_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content" />
 
     <com.canyinghao.canrefresh.classic.ClassicRefreshView
         android:id="@id/can_refresh_footer"

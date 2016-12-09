@@ -57,9 +57,9 @@ public class Utils {
             }
 
         } else {
-            return "2016-12-09T00:00:00";
+            return "2016-12-09T13:20:00";
         }
-        return "2016-12-09T00:00:00";
+        return "2016-12-09T13:20:00";
     }
 
     public static String getCurrentTime() {
