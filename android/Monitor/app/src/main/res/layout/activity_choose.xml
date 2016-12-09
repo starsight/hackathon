@@ -36,8 +36,10 @@
         android:layout_above="@id/bt_choose_register"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="90dp"
-        android:scaleX="2"
-        android:scaleY="2"
+        android:maxWidth="24dp"
+        android:maxHeight="24dp"
+        android:scaleX="1"
+        android:scaleY="1"
         android:id="@+id/iv_choose_icon"
         />
 

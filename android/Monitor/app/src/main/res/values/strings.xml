@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Monitor</string>
+    <string name="app_name">龙眼</string>
 
     <string name="action_logout" translatable="false">更换帐号</string>
     <string name="action_about_app" translatable="false">关于与建议</string>
