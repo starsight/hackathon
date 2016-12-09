@@ -1,10 +1,12 @@
 package com.wenjiehe.monitor;
 
+import android.content.DialogInterface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,6 +14,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -37,6 +41,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.R.id.message;
 import static com.wenjiehe.monitor.Utils.file2Byte;
 import static com.wenjiehe.monitor.Utils.getCurrentTime;
 import static com.wenjiehe.monitor.Utils.readTimeFromFIle;
@@ -71,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements CanRefreshLayout.
         Toolbar toolbar = (Toolbar) findViewById(R.id.meinfo_toolbar);
         toolbar.setTitle("监控图片信息");
         setSupportActionBar(toolbar);
+        toolbar.setOnMenuItemClickListener(onMenuItemClick);
 
         //透明状态栏
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
@@ -204,6 +210,7 @@ public class MainActivity extends AppCompatActivity implements CanRefreshLayout.
     private static final int IS_FAIL = 0;
     private static final int IS_SUCCESS = 1;
     private static final int IS_NONE = 2;
+    private static final int IS_CONTROL_OK= 3;
 
     private int current = 0;
     private Handler handler = new Handler() {
@@ -243,9 +250,14 @@ public class MainActivity extends AppCompatActivity implements CanRefreshLayout.
                 case IS_NONE:
                     Log.d(TAG+"mL",String.valueOf(mList.size()));
                     Log.d(TAG+"ar",String.valueOf(arrayListMO.size()));
-
                     rva.notifyDataSetChanged();
                     refresh.refreshComplete();
+                    break;
+                case IS_CONTROL_OK:
+                    //Thread.sleep(100);
+                    Toast.makeText(MainActivity.this,"请求控制成功，请刷新获取实时图像！",Toast.LENGTH_SHORT).show();
+                    refresh.autoRefresh();
+                    //onRefresh();
                     break;
                 default:
                     break;
@@ -363,4 +375,59 @@ public class MainActivity extends AppCompatActivity implements CanRefreshLayout.
             finish();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem menuItem) {
+            switch (menuItem.getItemId()) {
+                case R.id.action_control:
+                    sendControlCmd();
+                    //
+                    break;
+                case R.id.action_about:
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("DragonBorad 远程监控")
+                            .setMessage("    这是一款基于DragonBorad 410c开发板的远程软件管理应用。"+
+                                    "主要功能获取410c开发板的历史监控图片信息，实时请求410c开发板拍摄照片等功能.\n"+
+                                    "    该工程由独立开发者@zero9230、@zhangpengcheng2015、@starsight制作，开源在http://github/starsight/Hackathon，欢迎Star、Fork、提issue.")
+                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                }
+                            }).show();
+                    break;
+            }
+            return true;
+        }
+    };
+
+    public void sendControlCmd() {
+
+        new Thread() {
+            @Override
+            public void run() {
+                OkHttpClient client = new OkHttpClient();
+                final Request request = new Request.Builder().get()
+                        .url("http://123.206.214.17:8080/Supervisor/user.do?method=ctrl")
+                        .build();
+                try {
+                    client.newCall(request).execute();
+                    Message m = new Message();
+                    m.what = IS_CONTROL_OK ;
+                    handler.sendMessage(m);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+
 }

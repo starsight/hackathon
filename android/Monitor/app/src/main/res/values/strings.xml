@@ -27,4 +27,7 @@
     <string name="error_register_user_name_repeat" translatable="false">用户名已被注册，请重新填写</string>
     <string name="error_register_email_repeat" translatable="false">邮箱已被注册，请更换邮箱</string>
     <string name="success_register_success" translatable="false">注册成功</string>
+
+    <string name="control" translatable="false">控制410c拍照</string>
+    <string name="about" translatable="false">关于作者</string>
 </resources>
